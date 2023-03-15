@@ -19,8 +19,8 @@ namespace DevHawk.SampleContracts
     [ContractPermission("*", "transfer")]
     public class TestReceiverContract : SmartContract
     {
-        [InitialValue("0x17", ContractParameterType.ByteArray)]
-        private static readonly ByteString PREFIX_NEP17 = default!;
+        // [InitialValue("0x17", ContractParameterType.ByteArray)]
+        // private static readonly ByteString PREFIX_NEP17 = default!;
 
         [InitialValue("0xFF", ContractParameterType.ByteArray)]
         private static readonly ByteString Key_ContractOwner = default!;
@@ -29,18 +29,21 @@ namespace DevHawk.SampleContracts
         {
             if (amount <= 0) throw new Exception("Invalid payment amount");
 
-            var key = PREFIX_NEP17.Concat(Runtime.CallingScriptHash);
-            var balance = (BigInteger)Storage.Get(Storage.CurrentContext, key);
-            Storage.Put(Storage.CurrentContext, key, balance + amount);
+            var symbol = TokenSymbol(Runtime.CallingScriptHash);
+            Runtime.Log($"Received {amount} {symbol}");
         }
 
-        public bool Withdraw(UInt160 scriptHash, UInt160 receiver, BigInteger amount)
+        public void Withdraw(UInt160 scriptHash, UInt160 receiver, BigInteger amount)
         {
             ValidateOwner("Only the contract owner can withdraw tokens");
             if (receiver == UInt160.Zero || !receiver.IsValid)
                 throw new Exception("Invalid withrdrawl address");
 
-            return Nep17Transfer(scriptHash, Runtime.ExecutingScriptHash, receiver, amount);
+            var symbol = TokenSymbol(scriptHash);
+            if (Nep17Transfer(scriptHash, Runtime.ExecutingScriptHash, receiver, amount))
+            {
+                Runtime.Log($"Withdrew {amount} {symbol}");
+            }
         }
 
         [DisplayName("_deploy")]
@@ -64,6 +67,11 @@ namespace DevHawk.SampleContracts
             var owner = (UInt160)Storage.Get(Storage.CurrentContext, Key_ContractOwner);
             if (!Runtime.CheckWitness(owner))
                 throw new Exception(message);
+        }
+
+        static string TokenSymbol(UInt160 scriptHash)
+        {
+            return (string)Contract.Call(scriptHash, "symbol", CallFlags.ReadOnly);
         }
 
         static bool Nep17Transfer(UInt160 scriptHash, UInt160 sender, UInt160 receiver, BigInteger amount, object? data = null)

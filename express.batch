@@ -7,3 +7,4 @@ transfer 1000 gas genesis bob
 transfer 100 neo alice #TestReceiver
 transfer 100 gas bob   #TestReceiver
 contract run TestReceiver withdraw #NeoToken @steve 50 -a owen
+contract run TestReceiver withdraw #GasToken @steve 50 -a owen

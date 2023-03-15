@@ -15,10 +15,5 @@
   <Target Name="RestoreDotNetTools" BeforeTargets="Compile" >
     <Exec Command="dotnet tool restore"/>
   </Target>
-<!-- 
-  <Target Name="UnzipNefDbgNfo" AfterTargets="Build" >
-    <Unzip
-      SourceFiles="$(MSBuildThisFileDirectory)bin\sc\hello-sample.nefdbgnfo"
-      DestinationFolder="$(MSBuildThisFileDirectory)bin\sc"/>
-  </Target> -->
+
 </Project>
