@@ -16,34 +16,43 @@ namespace DevHawk.SampleContracts
     [ManifestExtra("Author", "Harry Pierson")]
     [ManifestExtra("Email", "harrypierson@hotmail.com")]
     [ManifestExtra("Description", "This is an example contract")]
+    [ManifestExtra("GitHubRepo", "https://github.com/ngdenterprise/neo-test-receiver")]
     [ContractPermission("*", "transfer")]
     public class TestReceiverContract : SmartContract
     {
-        // [InitialValue("0x17", ContractParameterType.ByteArray)]
-        // private static readonly ByteString PREFIX_NEP17 = default!;
+        // using an extern ByteString property allows the contract to specify a single byte 
+        // storage key or prefix without a costly byte[] -> ByteString CONVERT operation
+        static extern ByteString Key_ContractOwner { [OpCode(OpCode.PUSHDATA1, "01FF")] get; }
 
-        [InitialValue("0xFF", ContractParameterType.ByteArray)]
-        private static readonly ByteString Key_ContractOwner = default!;
-
-        public static void OnNEP17Payment(UInt160 from, BigInteger amount, object data)
+        public static void OnNEP17Payment(UInt160? from, BigInteger amount, object _)
         {
             if (amount <= 0) throw new Exception("Invalid payment amount");
 
-            var symbol = TokenSymbol(Runtime.CallingScriptHash);
-            Runtime.Log($"Received {amount} {symbol}");
+#if DEBUG
+            // In a production contract, it would be wasteful (in contract GAS charge)
+            // to retrieve the token symbol or format the account as an address
+            // for a Log call
+            Runtime.Log($"Received {amount} {TokenSymbol(Runtime.CallingScriptHash)} from {ToAddress(from)}");
+#endif
         }
 
-        public void Withdraw(UInt160 scriptHash, UInt160 receiver, BigInteger amount)
+        public static bool Withdraw(UInt160 scriptHash, UInt160 receiver, BigInteger amount)
         {
             ValidateOwner("Only the contract owner can withdraw tokens");
             if (receiver == UInt160.Zero || !receiver.IsValid)
                 throw new Exception("Invalid withrdrawl address");
 
-            var symbol = TokenSymbol(scriptHash);
-            if (Nep17Transfer(scriptHash, Runtime.ExecutingScriptHash, receiver, amount))
+            var transferResult = Nep17Transfer(scriptHash, Runtime.ExecutingScriptHash, receiver, amount);
+#if DEBUG
+            // In a production contract, it would be wasteful (in contract GAS charge)
+            // to retrieve the token symbol or format the account as an address
+            // for a Log call
+            if (transferResult)
             {
-                Runtime.Log($"Withdrew {amount} {symbol}");
+                Runtime.Log($"Withdrew {amount} {TokenSymbol(scriptHash)} to {ToAddress(receiver)}");
             }
+#endif
+            return transferResult;
         }
 
         [DisplayName("_deploy")]
@@ -69,10 +78,25 @@ namespace DevHawk.SampleContracts
                 throw new Exception(message);
         }
 
+#if DEBUG
+        static string ToAddress(UInt160? account) 
+        {
+            // Since '0' is not a valid base58 encoding character, there's no danger
+            // that "N000000000000000000000000000000000" will be interpreted as a
+            // valid Neo N3 address.
+            if (account is null
+                || account.IsZero
+                || !account.IsValid) return "N000000000000000000000000000000000";
+
+            var prefix = (ByteString)(new byte[] { Runtime.AddressVersion });
+            return StdLib.Base58CheckEncode(prefix.Concat(account));
+        }
+
         static string TokenSymbol(UInt160 scriptHash)
         {
             return (string)Contract.Call(scriptHash, "symbol", CallFlags.ReadOnly);
         }
+#endif
 
         static bool Nep17Transfer(UInt160 scriptHash, UInt160 sender, UInt160 receiver, BigInteger amount, object? data = null)
         {
