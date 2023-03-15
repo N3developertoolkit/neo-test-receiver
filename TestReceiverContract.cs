@@ -43,16 +43,6 @@ namespace DevHawk.SampleContracts
             return Nep17Transfer(scriptHash, Runtime.ExecutingScriptHash, receiver, amount);
         }
 
-        static bool Nep17Transfer(UInt160 scriptHash, UInt160 sender, UInt160 receiver, BigInteger amount, object? data = null)
-        {
-            return (bool)Contract.Call(scriptHash, "transfer", CallFlags.All, sender, receiver, amount, data);
-        }
-
-        static bool Nep11Transfer(UInt160 scriptHash, UInt160 to, ByteString tokenId, object? data = null)
-        {
-            return (bool)Contract.Call(scriptHash, "transfer", CallFlags.ReadOnly, to, tokenId, data);
-        }
-
         [DisplayName("_deploy")]
         public static void Deploy(object _, bool update)
         {
@@ -74,6 +64,11 @@ namespace DevHawk.SampleContracts
             var owner = (UInt160)Storage.Get(Storage.CurrentContext, Key_ContractOwner);
             if (!Runtime.CheckWitness(owner))
                 throw new Exception(message);
+        }
+
+        static bool Nep17Transfer(UInt160 scriptHash, UInt160 sender, UInt160 receiver, BigInteger amount, object? data = null)
+        {
+            return (bool)Contract.Call(scriptHash, "transfer", CallFlags.All, sender, receiver, amount, data);
         }
     }
 }
