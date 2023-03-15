@@ -29,10 +29,11 @@ namespace DevHawk.SampleContracts
             if (amount <= 0) throw new Exception("Invalid payment amount");
 
 #if DEBUG
+            // Note, this is in a DEBUG conditional compilation block
             // In a production contract, it would be wasteful (in contract GAS charge)
-            // to retrieve the token symbol or format the account as an address
-            // for a Log call
-            Runtime.Log($"Received {amount} {TokenSymbol(Runtime.CallingScriptHash)} from {ToAddress(from)}");
+            // to retrieve the token symbol, format the amount as a decimal or the account
+            // as an address for a Log call
+            Runtime.Log($"Received {ToDecimal(Runtime.CallingScriptHash, amount)} {TokenSymbol(Runtime.CallingScriptHash)} from {ToAddress(from)}");
 #endif
         }
 
@@ -44,12 +45,13 @@ namespace DevHawk.SampleContracts
 
             var transferResult = Nep17Transfer(scriptHash, Runtime.ExecutingScriptHash, receiver, amount);
 #if DEBUG
+            // Note, this is in a DEBUG conditional compilation block
             // In a production contract, it would be wasteful (in contract GAS charge)
             // to retrieve the token symbol or format the account as an address
             // for a Log call
             if (transferResult)
             {
-                Runtime.Log($"Withdrew {amount} {TokenSymbol(scriptHash)} to {ToAddress(receiver)}");
+                Runtime.Log($"Withdrew {ToDecimal(scriptHash, amount)} {TokenSymbol(scriptHash)} to {ToAddress(receiver)}");
             }
 #endif
             return transferResult;
@@ -79,6 +81,10 @@ namespace DevHawk.SampleContracts
         }
 
 #if DEBUG
+        // Note, these methods are in a DEBUG conditional compilation block.
+        // These methods are GAS wasteful and should not be used on a production
+        // Neo N3 blockchain like MainNet 
+
         static string ToAddress(UInt160? account) 
         {
             // Since '0' is not a valid base58 encoding character, there's no danger
@@ -92,9 +98,39 @@ namespace DevHawk.SampleContracts
             return StdLib.Base58CheckEncode(prefix.Concat(account));
         }
 
+        static string ToDecimal(UInt160 scriptHash, BigInteger amount)
+        {
+            var decimals = TokenDecimals(scriptHash);
+            var str = StdLib.Itoa(amount);
+            if (decimals == 0) return str;
+            if (decimals < str.Length) 
+            {
+                var len = str.Length - decimals;
+                var str1 = str[..len];
+                var str2 = str[len..];
+                return $"{str1}.{str2}";
+            }
+            if (decimals == str.Length)
+            {
+                return $".{str}";
+            }
+
+            var zeros = "";
+            for (int i = 0; i < decimals - str.Length; i++)
+            {
+                zeros += '0';
+            }
+            return $".{zeros}{str}";
+        }
+
         static string TokenSymbol(UInt160 scriptHash)
         {
             return (string)Contract.Call(scriptHash, "symbol", CallFlags.ReadOnly);
+        }
+
+        static byte TokenDecimals(UInt160 scriptHash)
+        {
+            return (byte)Contract.Call(scriptHash, "decimals", CallFlags.ReadOnly);
         }
 #endif
 
