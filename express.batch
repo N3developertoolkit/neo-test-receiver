@@ -1,0 +1,9 @@
+transfer 1000 gas genesis owen
+contract deploy bin\sc\test-receiver.nef owen
+transfer 1000 neo genesis alice
+transfer 1000 gas genesis alice
+transfer 1000 neo genesis bob 
+transfer 1000 gas genesis bob 
+transfer 100 neo alice #TestReceiver
+transfer 100 gas bob   #TestReceiver
+contract run TestReceiver withdraw #NeoToken @steve 50 -a owen

@@ -37,6 +37,75 @@
       }
     }
   ],
-  "wallets": [],
+  "wallets": [
+    {
+      "name": "alice",
+      "accounts": [
+        {
+          "private-key": "0b8d745a2364825c81b3db8b4525ddfb87afd2315818bfd8fcae11784bf0f317",
+          "script-hash": "NNKpBFbKVyo4Y3CSNkwwJXrgF584FY4eZm",
+          "label": null,
+          "is-default": true,
+          "contract": {
+            "script": "0c210264448f50394995a5971f70e3df7bf80a59802c1339fdc7450f3ed5e90155c98c4156e7b327",
+            "parameters": [
+              "Signature"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "bob",
+      "accounts": [
+        {
+          "private-key": "da9ae47ea50a7efafd688e41270fb4f0eafd5d974083d9716c60f12eeafd09ed",
+          "script-hash": "NPVfx8vrEcqSnVGNEavDLfoC4k5SEyDvby",
+          "label": null,
+          "is-default": true,
+          "contract": {
+            "script": "0c210383f2266fdb56b805f91afd07367cd1d298803b17deae1d584842ec53ee0558144156e7b327",
+            "parameters": [
+              "Signature"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "owen",
+      "accounts": [
+        {
+          "private-key": "b94dbb928d3b3c9fa291b1874f400084e244a395d81c4c410cf53a9beecdd498",
+          "script-hash": "NcfNyDbaHAgS5oRjkhHYFKAJ1JnRVjcH5j",
+          "label": null,
+          "is-default": true,
+          "contract": {
+            "script": "0c21029fdc938abc97e2ac6e9cd1e586208ee07142dcf83e41a8f3b0f4269ca705ecc64156e7b327",
+            "parameters": [
+              "Signature"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "steve",
+      "accounts": [
+        {
+          "private-key": "a438c99d16766a126ed5ce1028250b7146f8373cc51637b00084b33c572dee59",
+          "script-hash": "NQdK7aM5ha12PjcMf9evaofiRSp7irZ9Jk",
+          "label": null,
+          "is-default": true,
+          "contract": {
+            "script": "0c2103f87c775aed94c27d025f784aa81b16477570887afeb9c4914b5dfe9d84c9fc4f4156e7b327",
+            "parameters": [
+              "Signature"
+            ]
+          }
+        }
+      ]
+    }
+  ],
   "settings": {}
 }

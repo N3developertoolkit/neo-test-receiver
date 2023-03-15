@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <NeoContractName>$(AssemblyName)</NeoContractName>
-    <!-- <NeoExpressBatchFile>./express.batch</NeoExpressBatchFile> -->
+    <NeoExpressBatchFile>./express.batch</NeoExpressBatchFile>
     <Nullable>enable</Nullable>
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>

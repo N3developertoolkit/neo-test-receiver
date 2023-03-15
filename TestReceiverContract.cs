@@ -8,19 +8,17 @@ using Neo.SmartContract.Framework.Attributes;
 using Neo.SmartContract.Framework.Native;
 using Neo.SmartContract.Framework.Services;
 
+#nullable enable
+
 namespace DevHawk.SampleContracts
 {
     [DisplayName("TestReceiver")]
     [ManifestExtra("Author", "Harry Pierson")]
     [ManifestExtra("Email", "harrypierson@hotmail.com")]
     [ManifestExtra("Description", "This is an example contract")]
+    [ContractPermission("*", "transfer")]
     public class TestReceiverContract : SmartContract
     {
-        public delegate void OnReceiveNep17Delegate(UInt160 from, UInt160 tokenHash, BigInteger amount);
-
-        [DisplayName("ReceiveNep17")]
-        public static event OnReceiveNep17Delegate OnReceiveNep17 = default!;
-
         [InitialValue("0x17", ContractParameterType.ByteArray)]
         private static readonly ByteString PREFIX_NEP17 = default!;
 
@@ -34,14 +32,25 @@ namespace DevHawk.SampleContracts
             var key = PREFIX_NEP17.Concat(Runtime.CallingScriptHash);
             var balance = (BigInteger)Storage.Get(Storage.CurrentContext, key);
             Storage.Put(Storage.CurrentContext, key, balance + amount);
-            OnReceiveNep17(from, Runtime.CallingScriptHash, amount);       
         }
 
-        public static BigInteger BalanceOf(UInt160 tokenHash)
+        public bool Withdraw(UInt160 scriptHash, UInt160 receiver, BigInteger amount)
         {
-            var key = PREFIX_NEP17.Concat(tokenHash);
-            var balance = (BigInteger)Storage.Get(Storage.CurrentContext, key);
-            return balance;
+            ValidateOwner("Only the contract owner can withdraw tokens");
+            if (receiver == UInt160.Zero || !receiver.IsValid)
+                throw new Exception("Invalid withrdrawl address");
+
+            return Nep17Transfer(scriptHash, Runtime.ExecutingScriptHash, receiver, amount);
+        }
+
+        static bool Nep17Transfer(UInt160 scriptHash, UInt160 sender, UInt160 receiver, BigInteger amount, object? data = null)
+        {
+            return (bool)Contract.Call(scriptHash, "transfer", CallFlags.All, sender, receiver, amount, data);
+        }
+
+        static bool Nep11Transfer(UInt160 scriptHash, UInt160 to, ByteString tokenId, object? data = null)
+        {
+            return (bool)Contract.Call(scriptHash, "transfer", CallFlags.ReadOnly, to, tokenId, data);
         }
 
         [DisplayName("_deploy")]
@@ -55,13 +64,16 @@ namespace DevHawk.SampleContracts
 
         public static void Update(ByteString nefFile, string manifest)
         {
-            var contractOwner = (UInt160)Storage.Get(Storage.CurrentContext, Key_ContractOwner);
-            if (!Runtime.CheckWitness(contractOwner))
-            {
-                throw new Exception("Only the contract owner can update the contract");
-            }
+            ValidateOwner("Only the contract owner can update the contract");
             ContractManagement.Update(nefFile, manifest, null);
         }
 
+        static void ValidateOwner(string? message = null)
+        {
+            message ??= "Only the contract owner can do this";
+            var owner = (UInt160)Storage.Get(Storage.CurrentContext, Key_ContractOwner);
+            if (!Runtime.CheckWitness(owner))
+                throw new Exception(message);
+        }
     }
 }
